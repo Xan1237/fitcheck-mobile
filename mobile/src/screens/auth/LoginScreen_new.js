@@ -113,8 +113,8 @@ const AuthScreen = ({ navigation }) => {
           await AsyncStorage.setItem('expiresAt', expiresAt.toISOString());
         }
         
-        // Navigate to main app or trigger auth state change
-        // This will be handled by the AuthContext
+    // Redirect to Home screen after successful login
+    navigation.navigate('Home');
       } else {
         throw new Error(response.data.message || 'Login failed');
       }

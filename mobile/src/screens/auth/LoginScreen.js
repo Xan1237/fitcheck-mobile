@@ -15,11 +15,13 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { MaterialIcons } from '@expo/vector-icons';
 import axios from 'axios';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { useAuth } from '../../context/AuthContext';
 
 const API_BASE_URL = process.env.EXPO_PUBLIC_API_BASE_URL || 'http://localhost:5175';
 const SUPABASE_URL = process.env.EXPO_PUBLIC_SUPABASE_URL || 'https://abamtegziqubfiicyftc.supabase.co';
 
 const AuthScreen = ({ navigation }) => {
+  const { login } = useAuth();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [username, setUsername] = useState('');
@@ -98,28 +100,9 @@ const AuthScreen = ({ navigation }) => {
     }
 
     try {
-      const response = await axios.post(`${API_BASE_URL}/auth/signin`, {
-        email,
-        password
-      });
+      const result = await login(email, password);
 
-      if (response.data.success) {
-        await AsyncStorage.setItem('token', response.data.token);
-
-        // Get username and save to AsyncStorage
-        const usernameRes = await axios.post(
-          `${API_BASE_URL}/api/getUserName`,
-          {},
-          {
-            headers: {
-              Authorization: `Bearer ${response.data.token}`,
-            },
-          }
-        );
-        if (usernameRes.data.success && usernameRes.data.username) {
-          await AsyncStorage.setItem('username', usernameRes.data.username);
-        }
-
+      if (result.success) {
         // Set expiration if rememberMe is checked (7 days)
         if (rememberMe) {
           const expiresAt = new Date();
@@ -127,15 +110,13 @@ const AuthScreen = ({ navigation }) => {
           await AsyncStorage.setItem('expiresAt', expiresAt.toISOString());
         }
         
-        // Navigate to main app or trigger auth state change
-        // This will be handled by the AuthContext
+        // No need to manually navigate - AuthContext will update isAuthenticated
+        // and AppNavigator will automatically redirect to the main tabs
       } else {
-        throw new Error(response.data.message || 'Login failed');
+        throw new Error(result.error || 'Login failed');
       }
     } catch (err) {
-      const errorMessage = err.response?.data?.message || 
-                         err.message || 
-                         'Login failed. Please try again.';
+      const errorMessage = err.message || 'Login failed. Please try again.';
       throw new Error(errorMessage);
     }
   };
