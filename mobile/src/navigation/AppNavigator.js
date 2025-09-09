@@ -16,6 +16,7 @@ import ExploreScreen from '../screens/explore/ExploreScreen';
 import SocialScreen from '../screens/social/SocialScreen';
 import MessagesScreen from '../screens/messages/MessagesScreen';
 import ProfileScreen from '../screens/profile/ProfileScreen';
+import UserProfileScreen from '../screens/profile/UserProfileScreen';
 import LoadingScreen from '../screens/LoadingScreen';
 
 const Stack = createStackNavigator();
@@ -121,6 +122,7 @@ const AppNavigator = () => {
           <Stack.Screen name="CreatePost" component={CreatePostScreen} />
           <Stack.Screen name="ChatDetail" component={ChatDetailScreen} />
           <Stack.Screen name="Settings" component={SettingsScreen} />
+          <Stack.Screen name="UserProfile" component={UserProfileScreen} />
         </>
       ) : (
         <Stack.Screen name="AuthStack" component={AuthStack} />
