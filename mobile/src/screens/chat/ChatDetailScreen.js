@@ -22,6 +22,7 @@ const ChatDetailScreen = ({ route, navigation }) => {
   const { chatId, participants, chatName } = route.params;
   const [messages, setMessages] = useState([]);
   const [newMessage, setNewMessage] = useState('');
+  const [userName, setUserName] = useState('');
   const [loading, setLoading] = useState(false);
   const [currentUser, setCurrentUser] = useState(null);
   const flatListRef = useRef(null);
@@ -35,6 +36,7 @@ const ChatDetailScreen = ({ route, navigation }) => {
     try {
       const token = await AsyncStorage.getItem('token');
       const userStr = await AsyncStorage.getItem('user');
+      setUserName(await AsyncStorage.getItem('username'));
       if (userStr) {
         setCurrentUser(JSON.parse(userStr));
       }
@@ -126,7 +128,8 @@ const ChatDetailScreen = ({ route, navigation }) => {
 
   const renderMessage = ({ item, index }) => {
     // Use ownerUsername for sender name, and compare to currentUser?.username
-    const isCurrentUser = item.ownerUsername === currentUser?.username;
+    console.log(item.ownerUsername, currentUser?.username);
+    const isCurrentUser = item.ownerUsername === userName;
     const previousMessage = index > 0 ? messages[index - 1] : null;
     const showDateSeparator = !previousMessage || 
       formatDate(item.created_at) !== formatDate(previousMessage.created_at);
