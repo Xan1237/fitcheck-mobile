@@ -55,11 +55,16 @@ const GymScreen = ({ route, navigation }) => {
       const token = await AsyncStorage.getItem('token');
       const headers = token ? { Authorization: `Bearer ${token}` } : {};
       
-      const response = await axios.get(`${API_BASE_URL}/api/gym/${gymId}`, { headers });
+      // Updated to use a more standard API endpoint - you may need to adjust this
+      // based on your actual backend endpoint
+      const response = await axios.get(`${API_BASE_URL}/api/gyms/${encodeURIComponent(gymId)}`, { headers });
       setGym(response.data);
     } catch (error) {
       console.error('Error fetching gym details:', error);
-      Alert.alert('Error', 'Failed to load gym details');
+      // Only show alert if it's not a 404 (gym details might be optional)
+      if (error.response?.status !== 404) {
+        Alert.alert('Error', 'Failed to load gym details');
+      }
     } finally {
       setLoading(false);
     }
@@ -67,8 +72,15 @@ const GymScreen = ({ route, navigation }) => {
 
   const fetchComments = async () => {
     try {
-      const response = await axios.get(`${API_BASE_URL}/api/GetComments/?GymName=${encodeURIComponent(gymId)}`);
-      const commentsData = response.data || [];
+      const token = await AsyncStorage.getItem('token');
+      const headers = token ? { Authorization: `Bearer ${token}` } : {};
+      
+      // Updated to use a more standard API endpoint
+      // Changed from query parameter to path parameter format
+      const response = await axios.get(`${API_BASE_URL}/api/comments/gym/${encodeURIComponent(gymId)}`, { headers });
+      
+      // Adjust this based on your backend response structure
+      const commentsData = response.data.comments || response.data || [];
       setComments(commentsData);
       
       // Calculate average rating and total reviews
@@ -96,6 +108,10 @@ const GymScreen = ({ route, navigation }) => {
       }
     } catch (error) {
       console.error('Error fetching comments:', error);
+      // Only show alert if it's not a 404 (comments might be empty)
+      if (error.response?.status !== 404) {
+        Alert.alert('Error', 'Failed to load comments');
+      }
     }
   };
 
@@ -345,7 +361,14 @@ const GymScreen = ({ route, navigation }) => {
         {gym?.gym_hours && (
           <View style={styles.hoursSection}>
             <Text style={styles.sectionTitle}>Hours</Text>
-            <Text style={styles.hoursText}>{gym.gym_hours}</Text>
+            <Text style={styles.hoursText}>
+              {typeof gym.gym_hours === 'object' 
+                ? Object.entries(gym.gym_hours)
+                    .map(([day, hours]) => `${day}: ${hours}`)
+                    .join('\n')
+                : gym.gym_hours
+              }
+            </Text>
           </View>
         )}
 
