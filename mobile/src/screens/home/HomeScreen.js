@@ -26,11 +26,11 @@ const HomeScreen = () => {
   const fetchFeed = async () => {
     try {
       setLoading(true);
-      const response = await api.get('/api/getPosts');
-      setPosts(response.data || []);
+      const response = await api.get('/api/posts');
+      setPosts(response.data.posts || []);
     } catch (error) {
       console.error('Error fetching feed:', error);
-    } finally {
+    } finally { 
       setLoading(false);
     }
   };
@@ -42,19 +42,19 @@ const HomeScreen = () => {
   };
 
   const renderPost = (post) => (
-    <View key={post.id || post.PostID} style={styles.postCard}>
+    <View key={post.postId} style={styles.postCard}>
       <View style={styles.postHeader}>
         <View style={styles.userInfo}>
           <Image
             source={{ 
-              uri: post.userAvatar || 'https://via.placeholder.com/40' 
+              uri: post.profile_picture_url || 'https://via.placeholder.com/40' 
             }}
             style={styles.avatar}
           />
           <View>
-            <Text style={styles.username}>{post.Username || 'Anonymous'}</Text>
+            <Text style={styles.username}>{post.username || 'Anonymous'}</Text>
             <Text style={styles.timestamp}>
-              {new Date(post.Time || post.created_at).toLocaleDateString()}
+              {new Date(post.created_at).toLocaleDateString()}
             </Text>
           </View>
         </View>
@@ -63,20 +63,24 @@ const HomeScreen = () => {
         </TouchableOpacity>
       </View>
 
-      <Text style={styles.postContent}>{post.PostText || post.content}</Text>
+      <Text style={styles.postContent}>{post.description || post.title}</Text>
 
-      {post.ImageURL && (
-        <Image source={{ uri: post.ImageURL }} style={styles.postImage} />
+      {post.image_url && (
+        <Image source={{ uri: post.image_url }} style={styles.postImage} />
       )}
 
       <View style={styles.postActions}>
         <TouchableOpacity style={styles.actionButton}>
-          <Ionicons name="heart-outline" size={24} color="#666" />
-          <Text style={styles.actionText}>{post.Likes || 0}</Text>
+          <Ionicons 
+            name={post.is_liked ? "heart" : "heart-outline"} 
+            size={24} 
+            color={post.is_liked ? "#FF3040" : "#666"} 
+          />
+          <Text style={styles.actionText}>{post.total_likes || 0}</Text>
         </TouchableOpacity>
         <TouchableOpacity style={styles.actionButton}>
           <Ionicons name="chatbubble-outline" size={24} color="#666" />
-          <Text style={styles.actionText}>{post.Comments || 0}</Text>
+          <Text style={styles.actionText}>{post.total_comments || 0}</Text>
         </TouchableOpacity>
         <TouchableOpacity style={styles.actionButton}>
           <Ionicons name="share-outline" size={24} color="#666" />
