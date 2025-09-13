@@ -49,12 +49,12 @@ const MessagesScreen = ({ navigation }) => {
       const token = await AsyncStorage.getItem('token');
       if (!token) return;
 
-      const response = await axios.get(`${API_BASE_URL}/api/chats`, {
+      const response = await axios.get(`${API_BASE_URL}/api/getUserChats`, {
         headers: { Authorization: `Bearer ${token}` }
       });
 
-      if (response.data) {
-        setChats(response.data);
+      if (response.data && response.data.chats) {
+        setChats(response.data.chats);
       }
     } catch (error) {
       console.error('Error fetching chats:', error);
@@ -155,7 +155,7 @@ const MessagesScreen = ({ navigation }) => {
       {/* Chat List */}
       <FlatList
         data={filteredChats}
-        keyExtractor={(item, index) => item.id || index.toString()}
+        keyExtractor={(item, index) => item.chat_id || index.toString()}
         renderItem={renderChatItem}
         refreshControl={
           <RefreshControl

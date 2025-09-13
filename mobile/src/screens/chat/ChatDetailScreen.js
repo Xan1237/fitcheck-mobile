@@ -50,9 +50,10 @@ const ChatDetailScreen = ({ route, navigation }) => {
       const token = await AsyncStorage.getItem('token');
       if (!token) return;
 
-      const response = await axios.get(`${API_BASE_URL}/api/messages/${chatId}`, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
+      const response = await axios.post(`${API_BASE_URL}/api/getChatMessages`, 
+        { chat_id: chatId },
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
 
       if (response.data) {
         // Sort by created_at ascending
@@ -90,7 +91,7 @@ const ChatDetailScreen = ({ route, navigation }) => {
       setMessages(prev => [...prev, tempMessage]);
       setNewMessage('');
 
-      const response = await axios.post(`${API_BASE_URL}/api/messages`, messageData, {
+      const response = await axios.post(`${API_BASE_URL}/api/newMessage`, messageData, {
         headers: { Authorization: `Bearer ${token}` }
       });
 
