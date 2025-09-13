@@ -52,9 +52,11 @@ const MessagesScreen = ({ navigation }) => {
       const response = await axios.get(`${API_BASE_URL}/api/getUserChats`, {
         headers: { Authorization: `Bearer ${token}` }
       });
-
+      
       if (response.data && response.data.chats) {
         setChats(response.data.chats);
+      } else {
+        console.log('MessagesScreen - No chats found in response');
       }
     } catch (error) {
       console.error('Error fetching chats:', error);

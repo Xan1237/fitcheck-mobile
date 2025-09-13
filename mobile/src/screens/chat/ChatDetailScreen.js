@@ -49,18 +49,24 @@ const ChatDetailScreen = ({ route, navigation }) => {
     try {
       const token = await AsyncStorage.getItem('token');
       if (!token) return;
+      
+      if (!chatId) {
+        console.error('ChatDetailScreen - chatId is undefined');
+        return;
+      }
 
       const response = await axios.post(`${API_BASE_URL}/api/getChatMessages`, 
-        { chat_id: chatId },
+        { chatId: chatId },
         { headers: { Authorization: `Bearer ${token}` } }
       );
 
-      if (response.data) {
+      if (response.data && response.data.messages) {
         // Sort by created_at ascending
-        setMessages(response.data.sort((a, b) => new Date(a.created_at) - new Date(b.created_at)));
+        setMessages(response.data.messages.sort((a, b) => new Date(a.created_at) - new Date(b.created_at)));
       }
     } catch (error) {
       console.error('Error fetching messages:', error);
+      console.error('Error details:', error.response?.data);
     }
   };
 
