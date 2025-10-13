@@ -111,7 +111,7 @@ const FindGymScreen = ({ navigation }) => {
   };
 
   const handleGymPress = (gym) => {
-    navigation.navigate('GymDetails', { gymId: gym.name || gym.id, gym });
+    navigation.navigate('GymDetails', { gymId: gym.id || gym.name, gym });
   };
 
   const handleProvinceChange = (province) => {

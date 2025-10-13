@@ -76,19 +76,22 @@ const GymScreen = ({ route, navigation }) => {
       const headers = token ? { Authorization: `Bearer ${token}` } : {};
       
       // Updated to use a more standard API endpoint
-      // Changed from query parameter to path parameter format
-      const response = await axios.get(`${API_BASE_URL}/api/comments/gym/${encodeURIComponent(gymId)}`, { headers });
-      
-      // Adjust this based on your backend response structure
-      const commentsData = response.data.comments || response.data || [];
+      const response = await axios.get(`${API_BASE_URL}/api/GetComments/?GymName=${encodeURIComponent(gymId)}`, { headers });
+      // Map API response to expected format
+      const rawComments = response.data.comments || response.data.data || [];
+      const commentsData = rawComments.map(comment => ({
+        UserName: comment.UserNamedata || 'Anonymous',
+        CommentText: comment.CommentText,
+        Rating: comment.Rating,
+        Time: comment.Time,
+        Tags: comment.Tags || [],
+      }));
       setComments(commentsData);
-      
       // Calculate average rating and total reviews
       if (commentsData.length > 0) {
         const avgRating = commentsData.reduce((sum, comment) => sum + (comment.Rating || 0), 0) / commentsData.length;
         setAverageRating(avgRating);
         setTotalReviews(commentsData.length);
-        
         // Calculate popular tags
         const tagCounts = {};
         commentsData.forEach(comment => {
@@ -98,12 +101,10 @@ const GymScreen = ({ route, navigation }) => {
             });
           }
         });
-        
         const popularTags = Object.entries(tagCounts)
           .sort(([,a], [,b]) => b - a)
           .slice(0, 6)
           .map(([tag, count]) => ({ tag, count }));
-        
         setGymTags(popularTags);
       }
     } catch (error) {
