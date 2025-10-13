@@ -183,7 +183,7 @@ const ProfileScreen = ({ navigation }) => {
       if (!token) return;
 
       const response = await axios.put(
-        `${API_BASE_URL}/api/profile/bio`,
+        `${API_BASE_URL}/api/updateUserBio`,
         { bio: editedBio },
         {
           headers: { Authorization: `Bearer ${token}` }
