@@ -45,7 +45,7 @@ const SocialScreen = ({ navigation }) => {
       setLoading(true);
       const token = await AsyncStorage.getItem('token');
       
-      const response = await axios.get(`${API_BASE_URL}/api/users`, {
+      const response = await axios.get(`${API_BASE_URL}/api/getAllUsers`, {
         headers: token ? { Authorization: `Bearer ${token}` } : {}
       });
 
