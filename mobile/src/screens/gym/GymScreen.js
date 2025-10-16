@@ -4,6 +4,7 @@ import {
   Text,
   StyleSheet,
   ScrollView,
+  FlatList,
   TouchableOpacity,
   TextInput,
   Alert,
@@ -396,7 +397,17 @@ const GymScreen = ({ route, navigation }) => {
         <View style={styles.reviewsSection}>
           <Text style={styles.sectionTitle}>Reviews ({totalReviews})</Text>
           {comments.length > 0 ? (
-            comments.map(renderComment)
+            <FlatList
+              data={comments}
+              renderItem={({ item }) => renderComment(item)}
+              keyExtractor={(item, index) => `comment-${index}`}
+              scrollEnabled={true}
+              nestedScrollEnabled={true}
+              style={styles.commentsList}
+              showsVerticalScrollIndicator={true}
+              maxHeight={800} // Much taller for better user experience
+              contentContainerStyle={{ paddingBottom: 60 }}
+            />
           ) : (
             <View style={styles.noReviewsContainer}>
               <MaterialIcons name="rate-review" size={48} color="#ccc" />
@@ -491,16 +502,16 @@ const styles = StyleSheet.create({
   // Gym Tags
   gymTagsSection: {
     backgroundColor: '#ffffff',
-    padding: 20,
-    marginTop: 8,
+    padding: 12,
+    marginTop: 4,
     borderBottomWidth: 1,
     borderBottomColor: '#eee',
   },
   sectionTitle: {
-    fontSize: 18,
+    fontSize: 16,
     fontWeight: '600',
     color: '#222',
-    marginBottom: 12,
+    marginBottom: 8,
   },
   gymTagsContainer: {
     flexDirection: 'row',
@@ -508,14 +519,14 @@ const styles = StyleSheet.create({
   },
   gymTag: {
     backgroundColor: '#fff5f0',
-    borderRadius: 6,
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    marginRight: 8,
-    marginBottom: 8,
+    borderRadius: 4,
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    marginRight: 6,
+    marginBottom: 6,
   },
   gymTagText: {
-    fontSize: 14,
+    fontSize: 12,
     color: '#ff6b00',
     fontWeight: '500',
   },
@@ -580,6 +591,10 @@ const styles = StyleSheet.create({
     padding: 20,
     marginTop: 8,
     marginBottom: 20,
+  },
+  commentsList: {
+    maxHeight: 800,
+    marginTop: 16,
   },
   commentCard: {
     borderBottomWidth: 1,
