@@ -25,6 +25,7 @@ const MessagesScreen = ({ navigation }) => {
   const [refreshing, setRefreshing] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [filteredChats, setFilteredChats] = useState([]);
+  const [profilePictures, setProfilePictures] = useState({});
 
   useEffect(() => {
     fetchChats();
@@ -43,6 +44,13 @@ const MessagesScreen = ({ navigation }) => {
     }
   }, [searchQuery, chats]);
 
+  // Helper to get chat partner name from chat object
+  const getChatName = (chat) => {
+    if (chat.uuid1 && chat.uuid1.trim().toLowerCase() === "you") return chat.uuid2;
+    if (chat.uuid2 && chat.uuid2.trim().toLowerCase() === "you") return chat.uuid1;
+    return 'Unknown Chat';
+  };
+
   const fetchChats = async () => {
     try {
       setLoading(true);
@@ -54,7 +62,11 @@ const MessagesScreen = ({ navigation }) => {
       });
       
       if (response.data && response.data.chats) {
-        setChats(response.data.chats);
+        const chatsData = response.data.chats;
+        setChats(chatsData);
+        
+        // Fetch profile pictures for all chat participants
+        await fetchProfilePictures(chatsData);
       } else {
         console.log('MessagesScreen - No chats found in response');
       }
@@ -65,11 +77,43 @@ const MessagesScreen = ({ navigation }) => {
     }
   };
 
-  // Helper to get chat partner name from chat object
-  const getChatName = (chat) => {
-    if (chat.uuid1 && chat.uuid1.trim().toLowerCase() === "you") return chat.uuid2;
-    if (chat.uuid2 && chat.uuid2.trim().toLowerCase() === "you") return chat.uuid1;
-    return 'Unknown Chat';
+  const fetchProfilePictures = async (chatsData) => {
+    try {
+      const token = await AsyncStorage.getItem('token');
+      if (!token) return;
+
+      const profilePicsMap = {};
+      
+      // Get unique usernames from chats
+      const usernames = new Set();
+      chatsData.forEach(chat => {
+        const chatName = getChatName(chat);
+        if (chatName && chatName !== 'Unknown Chat') {
+          usernames.add(chatName);
+        }
+      });
+
+      // Fetch profile pictures for all unique usernames
+      const promises = Array.from(usernames).map(async (username) => {
+        try {
+          const response = await axios.get(`${API_BASE_URL}/api/getProfilePicture/${username}`, {
+            headers: { Authorization: `Bearer ${token}` }
+          });
+          
+          if (response.data && response.data.profile_picture && response.data.profile_picture.profile_picture_url) {
+            profilePicsMap[username] = response.data.profile_picture.profile_picture_url;
+          }
+        } catch (error) {
+          console.log(`No profile picture found for ${username}`);
+          profilePicsMap[username] = null;
+        }
+      });
+
+      await Promise.all(promises);
+      setProfilePictures(profilePicsMap);
+    } catch (error) {
+      console.error('Error fetching profile pictures:', error);
+    }
   };
 
   const onRefresh = async () => {
@@ -89,6 +133,7 @@ const MessagesScreen = ({ navigation }) => {
   const renderChatItem = ({ item }) => {
     const chatName = getChatName(item);
     const isUnread = item.unreadCount > 0;
+    const profilePicUrl = profilePictures[chatName];
 
     return (
       <TouchableOpacity
@@ -96,9 +141,16 @@ const MessagesScreen = ({ navigation }) => {
         onPress={() => handleChatPress(item)}
       >
         <View style={styles.avatarContainer}>
-          <View style={styles.groupAvatar}>
-            <MaterialIcons name="person" size={24} color="#666" />
-          </View>
+          {profilePicUrl ? (
+            <Image 
+              source={{ uri: profilePicUrl }} 
+              style={styles.avatar}
+            />
+          ) : (
+            <View style={styles.groupAvatar}>
+              <MaterialIcons name="person" size={24} color="#666" />
+            </View>
+          )}
         </View>
 
         <View style={styles.chatContent}>
