@@ -16,7 +16,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '../../context/AuthContext';
 import api from '../../services/api';
 
-const HomeScreen = () => {
+const HomeScreen = ({ navigation }) => {
   const [refreshing, setRefreshing] = useState(false);
   const [posts, setPosts] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -252,7 +252,7 @@ const HomeScreen = () => {
         <View style={styles.quickActions}>
           <TouchableOpacity 
             style={styles.quickActionCard}
-            onPress={() => navigation.navigate('FindGyms')}
+            onPress={() => navigation.navigate('MainTabs', { screen: 'FindGyms' })}
           >
             <Ionicons name="location" size={32} color="#007AFF" />
             <Text style={styles.quickActionText}>Find Gyms</Text>
@@ -264,7 +264,10 @@ const HomeScreen = () => {
             <Ionicons name="add-circle" size={32} color="#FF9500" />
             <Text style={styles.quickActionText}>Share Post</Text>
           </TouchableOpacity>
-          <TouchableOpacity style={styles.quickActionCard}>
+          <TouchableOpacity 
+            style={styles.quickActionCard}
+            onPress={() => navigation.navigate('MainTabs', { screen: 'Social' })}
+          >
             <Ionicons name="people" size={32} color="#34C759" />
             <Text style={styles.quickActionText}>Connect</Text>
           </TouchableOpacity>
