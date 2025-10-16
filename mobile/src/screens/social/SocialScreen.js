@@ -50,14 +50,42 @@ const SocialScreen = ({ navigation }) => {
       });
 
       if (response.data) {
-        setUsers(response.data);
+        // Fetch profile pictures for each user
+        const usersWithProfilePics = await Promise.all(
+          response.data.map(async (user) => {
+            try {
+              const profilePicResponse = await axios.get(
+                `${API_BASE_URL}/api/getProfilePicture/${encodeURIComponent(user.username)}`,
+                { headers: token ? { Authorization: `Bearer ${token}` } : {} }
+              );
+              
+              // Handle the nested response structure
+              const profilePictureUrl = profilePicResponse.data?.profile_picture?.profile_picture_url || null;
+              
+              return {
+                ...user,
+                profilePictureUrl
+              };
+            } catch (error) {
+              console.log(`No profile picture found for user: ${user.username}`);
+              return {
+                ...user,
+                profilePictureUrl: null
+              };
+            }
+          })
+        );
+        
+        setUsers(usersWithProfilePics);
       }
     } catch (error) {
       console.error('Error fetching users:', error);
+      Alert.alert('Error', 'Failed to load users. Please try again.');
     } finally {
       setLoading(false);
     }
   };
+
 
   const handleFollow = async (userId) => {
     try {
@@ -100,10 +128,22 @@ const SocialScreen = ({ navigation }) => {
       style={styles.userCard}
       onPress={() => handleUserPress(item)}
     >
-      <Image
-        source={{ uri: item.avatar || 'https://via.placeholder.com/60' }}
-        style={styles.userAvatar}
-      />
+      <View style={styles.avatarContainer}>
+        {item.profilePictureUrl ? (
+          <Image
+            source={{ uri: item.profilePictureUrl }}
+            style={styles.userAvatar}
+            onError={() => {
+              // Fallback if image fails to load
+              console.log('Failed to load profile picture for user:', item.username);
+            }}
+          />
+        ) : (
+          <View style={styles.defaultAvatar}>
+            <MaterialIcons name="person" size={30} color="#ccc" />
+          </View>
+        )}
+      </View>
       
       <View style={styles.userInfo}>
         <Text style={styles.username}>{item.username}</Text>
@@ -251,7 +291,17 @@ const styles = StyleSheet.create({
     width: 60,
     height: 60,
     borderRadius: 30,
+  },
+  avatarContainer: {
     marginRight: 15,
+  },
+  defaultAvatar: {
+    width: 60,
+    height: 60,
+    borderRadius: 30,
+    backgroundColor: '#f0f0f0',
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   userInfo: {
     flex: 1,

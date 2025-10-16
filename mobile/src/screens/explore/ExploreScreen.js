@@ -89,7 +89,7 @@ const ExploreScreen = () => {
         </TouchableOpacity>
       </View>
 
-      <ScrollView style={styles.scrollView}>
+      <ScrollView style={styles.scrollView} contentContainerStyle={{ flexGrow: 1 }}>
         <View style={styles.quickFilters}>
           <TouchableOpacity style={styles.filterChip}>
             <Text style={styles.filterChipText}>Nearby</Text>

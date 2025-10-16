@@ -313,6 +313,7 @@ const GymScreen = ({ route, navigation }) => {
 
       <ScrollView
         style={styles.content}
+        contentContainerStyle={{ flexGrow: 1 }}
         refreshControl={
           <RefreshControl
             refreshing={refreshing}

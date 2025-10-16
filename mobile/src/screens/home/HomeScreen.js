@@ -100,6 +100,7 @@ const HomeScreen = () => {
 
       <ScrollView
         style={styles.scrollView}
+        contentContainerStyle={{ flexGrow: 1 }}
         refreshControl={
           <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
         }

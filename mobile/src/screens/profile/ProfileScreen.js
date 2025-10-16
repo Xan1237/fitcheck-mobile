@@ -303,6 +303,7 @@ const ProfileScreen = ({ navigation }) => {
 
       <ScrollView
         style={styles.content}
+        contentContainerStyle={{ flexGrow: 1 }}
         refreshControl={
           <RefreshControl
             refreshing={refreshing}

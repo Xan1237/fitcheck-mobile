@@ -158,7 +158,7 @@ const CreatePostScreen = ({ navigation }) => {
         </TouchableOpacity>
       </View>
 
-      <ScrollView style={styles.content}>
+      <ScrollView style={styles.content} contentContainerStyle={{ flexGrow: 1 }}>
         {/* Post Input */}
         <View style={styles.postSection}>
           <TextInput

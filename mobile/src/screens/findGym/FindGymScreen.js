@@ -238,6 +238,7 @@ const FindGymScreen = ({ navigation }) => {
       {/* Gyms List */}
       <ScrollView
         style={styles.gymsList}
+        contentContainerStyle={{ flexGrow: 1 }}
         showsVerticalScrollIndicator={false}
         refreshControl={
           <RefreshControl
