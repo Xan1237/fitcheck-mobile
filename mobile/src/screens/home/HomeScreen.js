@@ -35,6 +35,50 @@ const HomeScreen = () => {
     }
   };
 
+  const handleLikePress = async (postId) => {
+    try {
+      // Optimistically update the UI first
+      setPosts(prevPosts => 
+        prevPosts.map(post => {
+          if (post.postId === postId) {
+            const isCurrentlyLiked = post.is_liked;
+            return {
+              ...post,
+              is_liked: !isCurrentlyLiked,
+              total_likes: isCurrentlyLiked 
+                ? (post.total_likes || 0) - 1 
+                : (post.total_likes || 0) + 1
+            };
+          }
+          return post;
+        })
+      );
+
+      // Call the API
+      await api.get(`/api/addPostLike/${postId}`);
+      
+    } catch (error) {
+      console.error('Error handling like:', error);
+      
+      // Revert the optimistic update on error
+      setPosts(prevPosts => 
+        prevPosts.map(post => {
+          if (post.postId === postId) {
+            const isCurrentlyLiked = post.is_liked;
+            return {
+              ...post,
+              is_liked: !isCurrentlyLiked,
+              total_likes: isCurrentlyLiked 
+                ? (post.total_likes || 0) - 1 
+                : (post.total_likes || 0) + 1
+            };
+          }
+          return post;
+        })
+      );
+    }
+  };
+
   const onRefresh = async () => {
     setRefreshing(true);
     await fetchFeed();
@@ -70,7 +114,10 @@ const HomeScreen = () => {
       )}
 
       <View style={styles.postActions}>
-        <TouchableOpacity style={styles.actionButton}>
+        <TouchableOpacity 
+          style={styles.actionButton}
+          onPress={() => handleLikePress(post.postId)}
+        >
           <Ionicons 
             name={post.is_liked ? "heart" : "heart-outline"} 
             size={24} 
