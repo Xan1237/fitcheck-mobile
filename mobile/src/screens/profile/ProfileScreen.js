@@ -71,6 +71,11 @@ const ProfileScreen = ({ navigation }) => {
           profileImage: userData.profilePictureUrl,
           pr: userData.pr || [],
         });
+        console.log(userData.pr.length)
+        setStats({
+          personalRecords: userData.pr.length || 0,
+          totalPosts: userData.posts ? userData.posts.length : 0,
+        });
         setEditedBio(userData.bio || '');
         // Followers/following not present in response, set to 0 or handle as needed
         setFollowers(0);
@@ -114,10 +119,6 @@ const ProfileScreen = ({ navigation }) => {
       });
 
       if (response.data) {
-        setStats({
-          totalPosts: response.data.posts || 0,
-          personalRecords: response.data.personalRecords || 0,
-        });
         setFollowing(response.data.following_count || 0);
       }
     } catch (error) {
