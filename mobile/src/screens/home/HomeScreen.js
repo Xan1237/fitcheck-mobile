@@ -21,8 +21,11 @@ const HomeScreen = () => {
   const [posts, setPosts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showCommentModal, setShowCommentModal] = useState(false);
+  const [showViewCommentsModal, setShowViewCommentsModal] = useState(false);
   const [selectedPost, setSelectedPost] = useState(null);
   const [commentText, setCommentText] = useState('');
+  const [postComments, setPostComments] = useState([]);
+  const [loadingComments, setLoadingComments] = useState(false);
   const { user } = useAuth();
 
   useEffect(() => {
@@ -85,8 +88,28 @@ const HomeScreen = () => {
     }
   };
 
-  const handleCommentPress = (post) => {
+  const handleCommentPress = async (post) => {
     setSelectedPost(post);
+    setShowViewCommentsModal(true);
+    await fetchPostComments(post.postId);
+  };
+
+  const fetchPostComments = async (postId) => {
+    try {
+      setLoadingComments(true);
+      const response = await api.get(`/api/post/${postId}/comments`);
+      // Handle the API response structure
+      setPostComments(response.data.data || response.data.comments || response.data || []);
+    } catch (error) {
+      console.error('Error fetching comments:', error);
+      setPostComments([]);
+    } finally {
+      setLoadingComments(false);
+    }
+  };
+
+  const handleAddComment = () => {
+    setShowViewCommentsModal(false);
     setShowCommentModal(true);
   };
 
@@ -127,6 +150,11 @@ const HomeScreen = () => {
       setShowCommentModal(false);
       setCommentText('');
       setSelectedPost(null);
+      
+      // Refresh comments if view modal is still open
+      if (selectedPost?.postId) {
+        await fetchPostComments(selectedPost.postId);
+      }
       
       Alert.alert('Success', 'Comment added successfully!');
       
@@ -304,6 +332,76 @@ const HomeScreen = () => {
               maxLength={500}
             />
             <Text style={styles.charCount}>{commentText.length}/500</Text>
+          </View>
+        </SafeAreaView>
+      </Modal>
+
+      {/* View Comments Modal */}
+      <Modal
+        visible={showViewCommentsModal}
+        animationType="slide"
+        presentationStyle="pageSheet"
+      >
+        <SafeAreaView style={styles.modalContainer}>
+          <View style={styles.modalHeader}>
+            <TouchableOpacity onPress={() => {
+              setShowViewCommentsModal(false);
+              setSelectedPost(null);
+              setPostComments([]);
+            }}>
+              <Ionicons name="close" size={24} color="#666" />
+            </TouchableOpacity>
+            <Text style={styles.modalTitle}>
+              Comments ({postComments.length})
+            </Text>
+            <TouchableOpacity onPress={handleAddComment} style={styles.submitButton}>
+              <Text style={styles.submitButtonText}>Add</Text>
+            </TouchableOpacity>
+          </View>
+          
+          <View style={styles.modalContent}>
+            {selectedPost && (
+              <View style={styles.postPreview}>
+                <Text style={styles.postPreviewUser}>@{selectedPost.username}</Text>
+                <Text style={styles.postPreviewText} numberOfLines={2}>
+                  {selectedPost.description || selectedPost.title}
+                </Text>
+              </View>
+            )}
+            
+            {loadingComments ? (
+              <View style={styles.loadingContainer}>
+                <Text>Loading comments...</Text>
+              </View>
+            ) : postComments.length > 0 ? (
+              <ScrollView style={styles.commentsList} showsVerticalScrollIndicator={true}>
+                {postComments.map((comment, index) => (
+                  <View key={comment.id || index} style={styles.commentItem}>
+                    <View style={styles.commentHeader}>
+                      <View style={styles.commentUserInfo}>
+                        <Image
+                          source={{ 
+                            uri: comment.profile_picture_url || 'https://via.placeholder.com/32' 
+                          }}
+                          style={styles.commentAvatar}
+                        />
+                        <Text style={styles.commentUsername}>@{comment.username}</Text>
+                      </View>
+                      <Text style={styles.commentTime}>
+                        {new Date(comment.created_at).toLocaleDateString()}
+                      </Text>
+                    </View>
+                    <Text style={styles.commentText}>{comment.text}</Text>
+                  </View>
+                ))}
+              </ScrollView>
+            ) : (
+              <View style={styles.emptyCommentsContainer}>
+                <Ionicons name="chatbubble-outline" size={48} color="#ccc" />
+                <Text style={styles.emptyCommentsText}>No comments yet</Text>
+                <Text style={styles.emptyCommentsSubtext}>Be the first to comment!</Text>
+              </View>
+            )}
           </View>
         </SafeAreaView>
       </Modal>
@@ -522,6 +620,66 @@ const styles = StyleSheet.create({
     color: '#999',
     textAlign: 'right',
     marginTop: 8,
+  },
+  
+  // Comments viewing styles
+  commentsList: {
+    flex: 1,
+    marginTop: 16,
+  },
+  commentItem: {
+    backgroundColor: '#f8f8f8',
+    padding: 15,
+    borderRadius: 8,
+    marginBottom: 12,
+  },
+  commentHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 8,
+  },
+  commentUserInfo: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  commentAvatar: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    marginRight: 8,
+  },
+  commentUsername: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#007AFF',
+  },
+  commentTime: {
+    fontSize: 12,
+    color: '#999',
+  },
+  commentText: {
+    fontSize: 14,
+    color: '#333',
+    lineHeight: 18,
+  },
+  emptyCommentsContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingVertical: 60,
+  },
+  emptyCommentsText: {
+    fontSize: 18,
+    fontWeight: '600',
+    color: '#666',
+    marginTop: 16,
+  },
+  emptyCommentsSubtext: {
+    fontSize: 14,
+    color: '#999',
+    marginTop: 8,
+    textAlign: 'center',
   },
 });
 
