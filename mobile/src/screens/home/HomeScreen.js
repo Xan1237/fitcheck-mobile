@@ -7,6 +7,9 @@ import {
   RefreshControl,
   TouchableOpacity,
   Image,
+  Modal,
+  TextInput,
+  Alert,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
@@ -17,6 +20,9 @@ const HomeScreen = () => {
   const [refreshing, setRefreshing] = useState(false);
   const [posts, setPosts] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [showCommentModal, setShowCommentModal] = useState(false);
+  const [selectedPost, setSelectedPost] = useState(null);
+  const [commentText, setCommentText] = useState('');
   const { user } = useAuth();
 
   useEffect(() => {
@@ -79,6 +85,57 @@ const HomeScreen = () => {
     }
   };
 
+  const handleCommentPress = (post) => {
+    setSelectedPost(post);
+    setShowCommentModal(true);
+  };
+
+  const handleSubmitComment = async () => {
+    if (!commentText.trim()) {
+      Alert.alert('Error', 'Please enter a comment');
+      return;
+    }
+
+    if (!selectedPost?.postId) {
+      Alert.alert('Error', 'Invalid post');
+      return;
+    }
+
+    try {
+      const commentData = {
+        text: commentText.trim(),
+        created_at: new Date().toISOString(),
+        username: user?.username || 'Anonymous'
+      };
+
+      await api.post(`/api/post/${selectedPost.postId}/comment`, commentData);
+      
+      // Update the post's comment count optimistically
+      setPosts(prevPosts => 
+        prevPosts.map(post => {
+          if (post.postId === selectedPost.postId) {
+            return {
+              ...post,
+              total_comments: (post.total_comments || 0) + 1
+            };
+          }
+          return post;
+        })
+      );
+
+      // Close modal and reset
+      setShowCommentModal(false);
+      setCommentText('');
+      setSelectedPost(null);
+      
+      Alert.alert('Success', 'Comment added successfully!');
+      
+    } catch (error) {
+      console.error('Error adding comment:', error);
+      Alert.alert('Error', 'Failed to add comment. Please try again.');
+    }
+  };
+
   const onRefresh = async () => {
     setRefreshing(true);
     await fetchFeed();
@@ -125,7 +182,10 @@ const HomeScreen = () => {
           />
           <Text style={styles.actionText}>{post.total_likes || 0}</Text>
         </TouchableOpacity>
-        <TouchableOpacity style={styles.actionButton}>
+        <TouchableOpacity 
+          style={styles.actionButton}
+          onPress={() => handleCommentPress(post)}
+        >
           <Ionicons name="chatbubble-outline" size={24} color="#666" />
           <Text style={styles.actionText}>{post.total_comments || 0}</Text>
         </TouchableOpacity>
@@ -201,6 +261,52 @@ const HomeScreen = () => {
           )}
         </View>
       </ScrollView>
+
+      {/* Comment Modal */}
+      <Modal
+        visible={showCommentModal}
+        animationType="slide"
+        presentationStyle="pageSheet"
+      >
+        <SafeAreaView style={styles.modalContainer}>
+          <View style={styles.modalHeader}>
+            <TouchableOpacity onPress={() => {
+              setShowCommentModal(false);
+              setCommentText('');
+              setSelectedPost(null);
+            }}>
+              <Ionicons name="close" size={24} color="#666" />
+            </TouchableOpacity>
+            <Text style={styles.modalTitle}>Add Comment</Text>
+            <TouchableOpacity onPress={handleSubmitComment} style={styles.submitButton}>
+              <Text style={styles.submitButtonText}>Post</Text>
+            </TouchableOpacity>
+          </View>
+          
+          <View style={styles.modalContent}>
+            {selectedPost && (
+              <View style={styles.postPreview}>
+                <Text style={styles.postPreviewUser}>@{selectedPost.username}</Text>
+                <Text style={styles.postPreviewText} numberOfLines={2}>
+                  {selectedPost.description || selectedPost.title}
+                </Text>
+              </View>
+            )}
+            
+            <TextInput
+              style={styles.commentInput}
+              placeholder="Write your comment..."
+              value={commentText}
+              onChangeText={setCommentText}
+              multiline
+              numberOfLines={4}
+              textAlignVertical="top"
+              maxLength={500}
+            />
+            <Text style={styles.charCount}>{commentText.length}/500</Text>
+          </View>
+        </SafeAreaView>
+      </Modal>
     </SafeAreaView>
   );
 };
@@ -348,6 +454,73 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: '#999',
     textAlign: 'center',
+    marginTop: 8,
+  },
+  
+  // Modal styles
+  modalContainer: {
+    flex: 1,
+    backgroundColor: '#ffffff',
+  },
+  modalHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingHorizontal: 20,
+    paddingVertical: 15,
+    borderBottomWidth: 1,
+    borderBottomColor: '#eee',
+  },
+  modalTitle: {
+    fontSize: 18,
+    fontWeight: '600',
+    color: '#333',
+  },
+  submitButton: {
+    backgroundColor: '#007AFF',
+    borderRadius: 6,
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+  },
+  submitButtonText: {
+    color: '#ffffff',
+    fontSize: 16,
+    fontWeight: '600',
+  },
+  modalContent: {
+    padding: 20,
+    flex: 1,
+  },
+  postPreview: {
+    backgroundColor: '#f8f8f8',
+    padding: 15,
+    borderRadius: 8,
+    marginBottom: 20,
+  },
+  postPreviewUser: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#007AFF',
+    marginBottom: 5,
+  },
+  postPreviewText: {
+    fontSize: 14,
+    color: '#666',
+    lineHeight: 18,
+  },
+  commentInput: {
+    borderWidth: 1,
+    borderColor: '#ddd',
+    borderRadius: 8,
+    padding: 15,
+    fontSize: 16,
+    minHeight: 100,
+    backgroundColor: '#f8f8f8',
+  },
+  charCount: {
+    fontSize: 12,
+    color: '#999',
+    textAlign: 'right',
     marginTop: 8,
   },
 });
