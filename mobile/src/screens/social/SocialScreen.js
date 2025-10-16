@@ -50,9 +50,13 @@ const SocialScreen = ({ navigation }) => {
       });
 
       if (response.data) {
-        // Fetch profile pictures for each user
+        // Fetch profile pictures and follower counts for each user
         const usersWithProfilePics = await Promise.all(
           response.data.map(async (user) => {
+            let profilePictureUrl = null;
+            let followerCount = 0;
+            
+            // Fetch profile picture
             try {
               const profilePicResponse = await axios.get(
                 `${API_BASE_URL}/api/getProfilePicture/${encodeURIComponent(user.username)}`,
@@ -60,19 +64,28 @@ const SocialScreen = ({ navigation }) => {
               );
               
               // Handle the nested response structure
-              const profilePictureUrl = profilePicResponse.data?.profile_picture?.profile_picture_url || null;
-              
-              return {
-                ...user,
-                profilePictureUrl
-              };
+              profilePictureUrl = profilePicResponse.data?.profile_picture?.profile_picture_url || null;
             } catch (error) {
               console.log(`No profile picture found for user: ${user.username}`);
-              return {
-                ...user,
-                profilePictureUrl: null
-              };
             }
+            
+            // Fetch follower count
+            try {
+              const followerResponse = await axios.get(
+                `${API_BASE_URL}/api/getFollowerCount/${encodeURIComponent(user.username)}`,
+                { headers: token ? { Authorization: `Bearer ${token}` } : {} }
+              );
+              
+              followerCount = followerResponse.data?.follower_count || 0;
+            } catch (error) {
+              console.log(`No follower count found for user: ${user.username}`);
+            }
+              
+            return {
+              ...user,
+              profilePictureUrl,
+              followers: followerCount
+            };
           })
         );
         
