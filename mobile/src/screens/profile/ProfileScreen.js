@@ -103,11 +103,13 @@ const ProfileScreen = ({ navigation }) => {
   };
 
   const fetchUserStats = async () => {
-    try {
-      const token = await AsyncStorage.getItem('token');
-      if (!token) return;
+    const username = await AsyncStorage.getItem('username');
+          const token = await AsyncStorage.getItem('token');
 
-      const response = await axios.get(`${API_BASE_URL}/api/user/stats`, {
+    try {
+            if (!token) return;
+
+      const response = await axios.get(`${API_BASE_URL}/api/getFollowingCount/${encodeURIComponent(username)}`, {
         headers: { Authorization: `Bearer ${token}` }
       });
 
@@ -116,12 +118,23 @@ const ProfileScreen = ({ navigation }) => {
           totalPosts: response.data.posts || 0,
           personalRecords: response.data.personalRecords || 0,
         });
-        setFollowers(response.data.followers || 0);
-        setFollowing(response.data.following || 0);
+        setFollowing(response.data.following_count || 0);
       }
     } catch (error) {
       console.error('Error fetching user stats:', error);
     }
+
+    try{
+      const followers = await axios.get(`${API_BASE_URL}/api/getFollowerCount/${encodeURIComponent(username)}`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      if(followers.data){
+        setFollowers(followers.data.follower_count || 0);
+      }
+    }catch(error){
+      console.error('Error fetching followers count:', error);
+    }
+
   };
 
   const handleImagePicker = async () => {
