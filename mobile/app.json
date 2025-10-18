@@ -14,7 +14,13 @@
     },
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.fitcheck.mobile"
+      "bundleIdentifier": "com.fitcheck.mobile",
+      "buildNumber": "1",
+      "infoPlist": {
+        "NSLocationWhenInUseUsageDescription": "FitCheck uses location to find nearby gyms and fitness centers.",
+        "NSCameraUsageDescription": "FitCheck uses camera to take photos for posts and profile pictures.",
+        "NSPhotoLibraryUsageDescription": "FitCheck uses photo library to select images for posts and profile pictures."
+      }
     },
     "android": {
       "adaptiveIcon": {

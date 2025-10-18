@@ -50,11 +50,12 @@ const SocialScreen = ({ navigation }) => {
       });
 
       if (response.data) {
-        // Fetch profile pictures and follower counts for each user
-        const usersWithProfilePics = await Promise.all(
+        // Fetch profile pictures, follower counts, and follow status for each user
+        const usersWithData = await Promise.all(
           response.data.map(async (user) => {
             let profilePictureUrl = null;
             let followerCount = 0;
+            let isFollowing = false;
             
             // Fetch profile picture
             try {
@@ -80,16 +81,29 @@ const SocialScreen = ({ navigation }) => {
             } catch (error) {
               console.log(`No follower count found for user: ${user.username}`);
             }
+
+            // Check if current user is following this user
+            try {
+              const followStatusResponse = await axios.get(
+                `${API_BASE_URL}/api/checkFollowStatus/${encodeURIComponent(user.username)}`,
+                { headers: token ? { Authorization: `Bearer ${token}` } : {} }
+              );
+              
+              isFollowing = followStatusResponse.data?.isFollowing || false;
+            } catch (error) {
+              console.log(`Could not check follow status for user: ${user.username}`);
+            }
               
             return {
               ...user,
               profilePictureUrl,
-              followers: followerCount
+              followers: followerCount,
+              isFollowing
             };
           })
         );
         
-        setUsers(usersWithProfilePics);
+        setUsers(usersWithData);
       }
     } catch (error) {
       console.error('Error fetching users:', error);
@@ -100,7 +114,7 @@ const SocialScreen = ({ navigation }) => {
   };
 
 
-  const handleFollow = async (userId) => {
+  const handleFollow = async (username) => {
     try {
       const token = await AsyncStorage.getItem('token');
       if (!token) {
@@ -108,21 +122,36 @@ const SocialScreen = ({ navigation }) => {
         return;
       }
 
-      const response = await axios.post(`${API_BASE_URL}/api/follow`, 
-        { userId },
+      const response = await axios.post(`${API_BASE_URL}/api/newFollower`, 
+        { targetUserName: username },
         { headers: { Authorization: `Bearer ${token}` } }
       );
 
       if (response.status === 200) {
+        // Update the user's following status and follower count
         setUsers(prev => prev.map(user => 
-          user.id === userId 
-            ? { ...user, isFollowing: !user.isFollowing }
+          user.username === username 
+            ? { 
+                ...user, 
+                isFollowing: !user.isFollowing,
+                followers: user.isFollowing 
+                  ? (user.followers - 1) 
+                  : (user.followers + 1)
+              }
             : user
         ));
+        
+        // Show success message
+        const isNowFollowing = !users.find(u => u.username === username)?.isFollowing;
+        Alert.alert(
+          'Success', 
+          isNowFollowing ? `You are now following ${username}` : `You unfollowed ${username}`
+        );
       }
     } catch (error) {
       console.error('Error following user:', error);
-      Alert.alert('Error', 'Failed to follow user');
+      const errorMessage = error.response?.data?.error || 'Failed to follow user';
+      Alert.alert('Error', errorMessage);
     }
   };
 
@@ -171,7 +200,7 @@ const SocialScreen = ({ navigation }) => {
           styles.followButton,
           item.isFollowing && styles.followingButton
         ]}
-        onPress={() => handleFollow(item.id)}
+        onPress={() => handleFollow(item.username)}
       >
         <Text style={[
           styles.followButtonText,

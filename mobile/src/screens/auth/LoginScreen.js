@@ -157,7 +157,11 @@ const AuthScreen = ({ navigation }) => {
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
         style={styles.keyboardAvoid}
       >
-        <ScrollView contentContainerStyle={styles.scrollContent}>
+        <ScrollView 
+          contentContainerStyle={styles.scrollContent}
+          showsVerticalScrollIndicator={true}
+          keyboardShouldPersistTaps="handled"
+        >
           {/* Orange Header Section - matching frontend left panel */}
           <View style={styles.headerSection}>
             <View style={styles.logoContainer}>
@@ -313,9 +317,8 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   scrollContent: {
-    flexGrow: 1,
-    justifyContent: 'center',
     padding: 20,
+    paddingBottom: 40,
   },
   
   // Header Section (Orange - matching frontend left panel)
